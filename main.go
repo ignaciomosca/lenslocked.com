@@ -7,23 +7,23 @@ import (
 	"net/http"
 )
 
+var homeTemplate *template.Template
+
 type User struct {
 	Name string
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("templates/home.gohtml")
-	if err != nil {
+	data := User{Name: "Juan"}
+	if err := homeTemplate.Execute(w, data); err != nil {
 		panic(err)
 	}
-	data := User{Name: "Juan"}
-	t.Execute(w, data)
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("templates/contact.gohtml")
+	t, err := template.ParseFiles("views/contact.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +32,7 @@ func contact(w http.ResponseWriter, r *http.Request) {
 
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("templates/faq.gohtml")
+	t, err := template.ParseFiles("views/faq.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func faq(w http.ResponseWriter, r *http.Request) {
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("templates/notfound.gohtml")
+	t, err := template.ParseFiles("views/notfound.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -50,6 +50,11 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	r := mux.NewRouter()
+	var err error
+	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	if err != nil {
+		panic(err)
+	}
 	template.New("blah")
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
