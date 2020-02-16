@@ -8,6 +8,7 @@ import (
 )
 
 var homeTemplate *template.Template
+var contactTemplate *template.Template
 
 type User struct {
 	Name string
@@ -23,11 +24,9 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("views/contact.gohtml")
-	if err != nil {
+	if err := contactTemplate.Execute(w, nil); err != nil {
 		panic(err)
 	}
-	t.Execute(w, nil)
 }
 
 func faq(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +51,10 @@ func main() {
 	r := mux.NewRouter()
 	var err error
 	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	if err != nil {
+		panic(err)
+	}
+	contactTemplate, err = template.ParseFiles("views/contact.gohtml")
 	if err != nil {
 		panic(err)
 	}
