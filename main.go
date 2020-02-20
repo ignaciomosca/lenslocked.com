@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"html/template"
+	"lenslocked.com/views"
 	"net/http"
 )
 
-var homeTemplate *template.Template
-var contactTemplate *template.Template
+var (
+	homeTemplate     *views.View
+	contactTemplate  *views.View
+	faqTemplate      *views.View
+	notFoundTemplate *views.View
+)
 
 type User struct {
 	Name string
@@ -17,47 +22,38 @@ type User struct {
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	data := User{Name: "Juan"}
-	if err := homeTemplate.Execute(w, data); err != nil {
+	if err := homeTemplate.Template.Execute(w, data); err != nil {
 		panic(err)
 	}
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactTemplate.Execute(w, nil); err != nil {
+	if err := contactTemplate.Template.Execute(w, nil); err != nil {
 		panic(err)
 	}
 }
 
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("views/faq.gohtml")
-	if err != nil {
+	if err := faqTemplate.Template.Execute(w, nil); err != nil {
 		panic(err)
 	}
-	t.Execute(w, nil)
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	t, err := template.ParseFiles("views/notfound.gohtml")
-	if err != nil {
-		panic(err)
-	}
-	t.Execute(w, nil)
+	notFoundTemplate.Template.Execute(w, nil)
 }
 
 func main() {
 	r := mux.NewRouter()
-	var err error
-	homeTemplate, err = template.ParseFiles("views/home.gohtml")
-	if err != nil {
-		panic(err)
-	}
-	contactTemplate, err = template.ParseFiles("views/contact.gohtml")
-	if err != nil {
-		panic(err)
-	}
+	homeTemplate = views.NewFiles("views/home.gohtml")
+	contactTemplate = views.NewFiles("views/contact.gohtml")
+	faqTemplate = views.NewFiles("views/faq.gohtml")
+	contactTemplate = views.NewFiles("views/contact.gohtml")
+	notFoundTemplate = views.NewFiles("views/notfound.gohtml")
+
 	template.New("blah")
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
