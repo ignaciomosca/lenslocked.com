@@ -15,44 +15,40 @@ var (
 	notFoundTemplate *views.View
 )
 
-type User struct {
-	Name string
-}
-
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	data := User{Name: "Juan"}
-	if err := homeTemplate.Template.Execute(w, data); err != nil {
+	err := homeTemplate.Template.ExecuteTemplate(w, homeTemplate.Layout, nil)
+	if err != nil {
 		panic(err)
 	}
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactTemplate.Template.Execute(w, nil); err != nil {
+	if err := contactTemplate.Template.ExecuteTemplate(w, contactTemplate.Layout, nil); err != nil {
 		panic(err)
 	}
 }
 
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := faqTemplate.Template.Execute(w, nil); err != nil {
+	if err := faqTemplate.Template.ExecuteTemplate(w, faqTemplate.Layout, nil); err != nil {
 		panic(err)
 	}
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	notFoundTemplate.Template.Execute(w, nil)
+	notFoundTemplate.Template.ExecuteTemplate(w, notFoundTemplate.Layout, nil)
 }
 
 func main() {
 	r := mux.NewRouter()
-	homeTemplate = views.NewFiles("views/home.gohtml")
-	contactTemplate = views.NewFiles("views/contact.gohtml")
-	faqTemplate = views.NewFiles("views/faq.gohtml")
-	contactTemplate = views.NewFiles("views/contact.gohtml")
-	notFoundTemplate = views.NewFiles("views/notfound.gohtml")
+	homeTemplate = views.NewFiles("bootstrap", "views/home.gohtml")
+	contactTemplate = views.NewFiles("bootstrap", "views/contact.gohtml")
+	faqTemplate = views.NewFiles("bootstrap", "views/faq.gohtml")
+	contactTemplate = views.NewFiles("bootstrap", "views/contact.gohtml")
+	notFoundTemplate = views.NewFiles("bootstrap", "views/notfound.gohtml")
 
 	template.New("blah")
 	r.HandleFunc("/", home)
