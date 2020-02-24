@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"html/template"
-	"lenslocked.com/views"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"lenslocked.com/controllers"
+	"lenslocked.com/views"
 )
 
 var (
@@ -57,12 +58,14 @@ func main() {
 	signInTemplate = views.NewFiles("bootstrap", "views/sign-in.gohtml")
 	signUpTemplate = views.NewFiles("bootstrap", "views/sign-up.gohtml")
 
-	template.New("blah")
-	r.HandleFunc("/", home)
-	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/faq", faq)
-	r.HandleFunc("/sign-in", signIn)
-	r.HandleFunc("/sign-up", signUp)
+	usersController := controllers.NewUser()
+
+	r.HandleFunc("/", home).Methods("GET")
+	r.HandleFunc("/contact", contact).Methods("GET")
+	r.HandleFunc("/faq", faq).Methods("GET")
+	r.HandleFunc("/sign-in", signIn).Methods("GET")
+	r.HandleFunc("/sign-up", usersController.New).Methods("GET")
+	r.HandleFunc("/sign-up", usersController.Create).Methods("POST")
 	r.NotFoundHandler = http.HandlerFunc(notFound)
 	fmt.Println("Running on port 3000")
 	http.ListenAndServe(":3000", r)
