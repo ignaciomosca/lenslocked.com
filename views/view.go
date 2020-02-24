@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"html/template"
+	"net/http"
 	"path/filepath"
 )
 
@@ -21,6 +22,10 @@ func NewFiles(layout string, files ...string) *View {
 	return &View{
 		Template: t,
 		Layout:   layout}
+}
+
+func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+	return v.Template.ExecuteTemplate(w, v.Layout, nil)
 }
 
 func fetchFiles() []string {

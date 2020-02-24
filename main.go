@@ -17,24 +17,17 @@ var (
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	err := homeTemplate.Template.ExecuteTemplate(w, homeTemplate.Layout, nil)
-	if err != nil {
-		panic(err)
-	}
+	must(homeTemplate.Render(w, nil))
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactTemplate.Template.ExecuteTemplate(w, contactTemplate.Layout, nil); err != nil {
-		panic(err)
-	}
+	must(contactTemplate.Render(w, nil))
 }
 
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := faqTemplate.Template.ExecuteTemplate(w, faqTemplate.Layout, nil); err != nil {
-		panic(err)
-	}
+	must(faqTemplate.Render(w, nil))
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
@@ -57,4 +50,10 @@ func main() {
 	r.NotFoundHandler = http.HandlerFunc(notFound)
 	fmt.Println("Running on port 3000")
 	http.ListenAndServe(":3000", r)
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
