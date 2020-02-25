@@ -6,26 +6,38 @@ import "net/http"
 
 import "fmt"
 
-func NewUser() *User {
-	return &User{
+import "github.com/gorilla/schema"
+
+func NewUser() *Users {
+	return &Users{
 		NewView: views.NewFiles("bootstrap", "views/users/new.gohtml"),
 	}
 }
 
-type User struct {
+type Users struct {
 	NewView *views.View
 }
 
-func (u *User) New(w http.ResponseWriter, r *http.Request) {
+type SignupForm struct {
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
+}
+
+func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	u.NewView.Render(w, nil)
 }
 
-func (u *User) Create(w http.ResponseWriter, r *http.Request) {
+func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		panic(err)
 	}
-	email := r.PostForm.Get("email")
-	password := r.PostForm.Get("password")
-	fmt.Println("email and password", email, password)
+
+	user := new(SignupForm)
+	decoder := schema.NewDecoder()
+	if err := decoder.Decode(user, r.PostForm); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("email and password", user.Email, user.Password)
 	u.NewView.Render(w, nil)
 }
