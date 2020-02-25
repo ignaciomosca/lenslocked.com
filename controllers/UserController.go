@@ -1,16 +1,15 @@
 package controllers
 
-import "lenslocked.com/views"
+import (
+	"fmt"
+	"net/http"
 
-import "net/http"
-
-import "fmt"
-
-import "github.com/gorilla/schema"
+	"lenslocked.com/views"
+)
 
 func NewUser() *Users {
 	return &Users{
-		NewView: views.NewFiles("bootstrap", "views/users/new.gohtml"),
+		NewView: views.NewFiles("bootstrap", "users/new"),
 	}
 }
 
@@ -33,8 +32,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := new(SignupForm)
-	decoder := schema.NewDecoder()
-	if err := decoder.Decode(user, r.PostForm); err != nil {
+	if err := parse(r, user); err != nil {
 		panic(err)
 	}
 
