@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialect/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var (
@@ -21,7 +21,7 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	db.AutoMigrate(&User{})
 	return &UserService{db: db}, nil
 }
 
@@ -84,6 +84,6 @@ func (us *UserService) Create(user *User) error {
 
 type User struct {
 	gorm.Model
-	Name  string `gorm:"not null;unique_index`
+	Name  string
 	Email string
 }

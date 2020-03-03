@@ -11,7 +11,17 @@ import (
 func main() {
 	r := mux.NewRouter()
 	static := controllers.NewStatic()
-	usersController := controllers.NewUser()
+
+	const (
+		host     = "localhost"
+		port     = 5432
+		user     = "postgres"
+		password = "postgres"
+		dbName   = "postgres"
+	)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
+
+	usersController := controllers.NewUser(psqlInfo)
 
 	r.HandleFunc("/", static.HomeView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/contact", static.ContactView.ServeHTTP).Methods("GET")
