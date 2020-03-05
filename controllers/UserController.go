@@ -54,7 +54,8 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	if loginErr != nil {
 		fmt.Fprintln(w, loginErr)
 	} else {
-		fmt.Fprintln(w, loggedUser)
+		signIn(w, loggedUser)
+		http.Redirect(w, r, "/cookieTest", http.StatusFound)
 	}
 }
 
@@ -70,6 +71,21 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	createUser := models.User{Name: user.Name, Email: user.Email, Password: user.Password}
 	u.UserService.Create(&createUser)
-	fmt.Println("email and password", user.Email, user.Password)
+	signIn(w, &createUser)
+	http.Redirect(w, r, "/cookieTest", http.StatusFound)
 	u.NewView.Render(w, nil)
+}
+
+func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("email")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, cookie)
+}
+
+func signIn(w http.ResponseWriter, u *models.User) {
+	cookie := http.Cookie{Name: "email", Value: u.Email}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintln(w, u)
 }

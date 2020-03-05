@@ -30,6 +30,7 @@ func main() {
 	r.HandleFunc("/sign-up", usersController.Create).Methods("POST")
 	r.HandleFunc("/login", usersController.LoginView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/login", usersController.SignIn).Methods("POST")
+	r.HandleFunc("/cookietest", usersController.CookieTest).Methods("GET")
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
 	fmt.Println("Running on port 3000")
 	http.ListenAndServe(":3000", r)
