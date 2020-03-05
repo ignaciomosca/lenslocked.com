@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("models: Resource not found")
-	ErrInvalidId = errors.New("models: Id must be greater than 0")
+	ErrNotFound     = errors.New("models: Resource not found")
+	ErrInvalidId    = errors.New("models: Id must be greater than 0")
+	InvalidPassword = errors.New("models: Password is invalid")
 )
 
 type UserService struct {
@@ -32,6 +33,24 @@ func (us *UserService) Update(user *User) error {
 		return err
 	}
 	return nil
+}
+
+func (us *UserService) Login(email, password string) (*User, error) {
+	user, err := us.ByEmail(email)
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+passwordPepper))
+	if err != nil {
+		switch err {
+		case bcrypt.ErrMismatchedHashAndPassword:
+			return nil, InvalidPassword
+		default:
+			return nil, err
+		}
+	} else {
+		return user, nil
+	}
 }
 
 func first(db *gorm.DB, dst interface{}) error {
@@ -78,9 +97,12 @@ func (us *UserService) ById(id uint) (*User, error) {
 	}
 }
 
+const passwordPepper = "cC242xTzSG!6j!mWd2N3Vg3!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!"
+
 // Create provider user
 func (us *UserService) Create(user *User) error {
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	passwordBytes := []byte(user.Password + passwordPepper)
+	hashPassword, err := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -94,5 +116,5 @@ type User struct {
 	Name         string
 	Email        string
 	Password     string `gorm:"-"`
-	PasswordHash string `gorm:"not null"`
+	PasswordHash string
 }
