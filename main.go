@@ -35,9 +35,3 @@ func main() {
 	fmt.Println("Running on port 3000")
 	http.ListenAndServe(":3000", r)
 }
-
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
