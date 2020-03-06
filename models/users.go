@@ -6,6 +6,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
+	"lenslocked.com/hash"
+	"lenslocked.com/rand"
 )
 
 var (
@@ -15,7 +17,8 @@ var (
 )
 
 type UserService struct {
-	db *gorm.DB
+	db   *gorm.DB
+	hmac hash.HMAC
 }
 
 func NewUserService(connectionInfo string) (*UserService, error) {
@@ -23,8 +26,8 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 	if err != nil {
 		return nil, err
 	}
-	db.AutoMigrate(&User{})
-	return &UserService{db: db}, nil
+	hmac := hash.NewHMAC(hmacSecretKey)
+	return &UserService{db: db, hmac: hmac}, nil
 }
 
 func (us *UserService) Update(user *User) error {
@@ -32,7 +35,10 @@ func (us *UserService) Update(user *User) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
+	return us.db.Save(user).Error
 }
 
 func (us *UserService) Login(email, password string) (*User, error) {
@@ -90,6 +96,7 @@ func (us *UserService) ById(id uint) (*User, error) {
 }
 
 const passwordPepper = "cC242xTzSG!6j!mWd2N3Vg3!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!"
+const hmacSecretKey = "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!"
 
 // Create provider user
 func (us *UserService) Create(user *User) error {
@@ -100,7 +107,25 @@ func (us *UserService) Create(user *User) error {
 	}
 	user.PasswordHash = string(hashPassword)
 	user.Password = ""
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
 	return us.db.Create(user).Error
+}
+
+func (us *UserService) ByRemember(token string) (*User, error) {
+	var user User
+	hashedToken := us.hmac.Hash(token)
+	err := first(us.db.Where("remember_hash = ?", hashedToken), &user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 type User struct {
@@ -109,4 +134,14 @@ type User struct {
 	Email        string
 	Password     string `gorm:"-"`
 	PasswordHash string
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
+}
+
+func first(db *gorm.DB, dst interface{}) error {
+	err := db.First(dst).Error
+	if err == gorm.ErrRecordNotFound {
+		return ErrNotFound
+	}
+	return err
 }
