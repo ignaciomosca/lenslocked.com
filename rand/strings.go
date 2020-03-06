@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 )
 
-// I tend to put constants near the top of the file
 const RememberTokenBytes = 32
 
 // RememberToken is a helper function designed to generate
