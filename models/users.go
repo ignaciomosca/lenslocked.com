@@ -16,7 +16,7 @@ var (
 	InvalidPassword = errors.New("models: Password is invalid")
 )
 
-type UserService struct {
+type userService struct {
 	UserDB
 }
 
@@ -33,18 +33,28 @@ type UserDB interface {
 	Close() error
 }
 
+// UserService is a set of methods to manipulate the user model
+type UserService interface {
+	// Login Verifies user and password are correct
+	// if user/password is correct a user gets returned
+	// if not, it will return an error
+	Login(email, password string) (*User, error)
+	UserDB
+}
+
 type userGorm struct {
 	db   *gorm.DB
 	hmac hash.HMAC
 }
 
-type UserValidator struct {
+type userValidator struct {
 	UserDB
 }
 
-var _ UserDB = &userGorm{}
+var _ UserService = &userService{}
+var _ UserDB = &userValidator{}
 
-func NewUserService(connectionInfo string) (*UserService, error) {
+func NewUserService(connectionInfo string) (*userService, error) {
 	db, err := gorm.Open("postgres", connectionInfo)
 	if err != nil {
 		return nil, err
@@ -53,7 +63,7 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 
 	ug := userGorm{db: db, hmac: hmac}
 
-	return &UserService{UserDB: UserValidator{UserDB: &ug}}, nil
+	return &userService{UserDB: userValidator{UserDB: &ug}}, nil
 }
 
 func (ug *userGorm) Update(user *User) error {
@@ -74,7 +84,7 @@ func (ug *userGorm) Update(user *User) error {
 // 	return uv.UserDB.ById(id)
 // }
 
-func (us *UserService) Login(email, password string) (*User, error) {
+func (us *userService) Login(email, password string) (*User, error) {
 	user, err := us.ByEmail(email)
 	if err != nil {
 		return nil, ErrNotFound

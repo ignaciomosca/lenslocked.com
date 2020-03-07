@@ -9,13 +9,13 @@ import (
 	"lenslocked.com/views"
 )
 
-func NewUser(connectionInfo string) *Users {
+func NewUser(connectionInfo string) Users {
 	us, err := models.NewUserService(connectionInfo)
 	if err != nil {
 		panic(err)
 	}
 
-	return &Users{
+	return Users{
 		NewView:     views.NewFiles("bootstrap", "users/new"),
 		LoginView:   views.NewFiles("bootstrap", "users/login"),
 		UserService: us,
@@ -25,7 +25,7 @@ func NewUser(connectionInfo string) *Users {
 type Users struct {
 	NewView     *views.View
 	LoginView   *views.View
-	UserService *models.UserService
+	UserService models.UserService
 }
 
 type SignupForm struct {
