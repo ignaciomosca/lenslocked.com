@@ -73,7 +73,7 @@ func (uv *userValidator) Create(user *User) error {
 
 	}
 
-	if err := runUserValFuncs(user, uv.bcryptPassword); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember); err != nil {
 		return err
 	}
 
@@ -87,10 +87,15 @@ func (uv *userValidator) Update(user *User) error {
 	return uv.UserDB.Update(user)
 }
 
+// Delete will delete a user with a provided id
 func (uv *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidId
+	var user User
+	user.ID = id
+	err := runUserValFuncs(&user, uv.idGreaterThanZero)
+	if err != nil {
+		return err
 	}
+
 	return uv.UserDB.Delete(id)
 }
 
@@ -208,6 +213,25 @@ func (uv *userValidator) hmacRemember(user *User) error {
 		return nil
 	}
 	user.RememberHash = uv.hmac.Hash(user.Remember)
+	return nil
+}
+
+func (uv *userValidator) defaultRemember(user *User) error {
+	if user.Remember != "" {
+		return nil
+	}
+	token, err := rand.RememberToken()
+	if err != nil {
+		return err
+	}
+	user.Remember = token
+	return nil
+}
+
+func (uv *userValidator) idGreaterThanZero(user *User) error {
+	if user.ID <= 0 {
+		return ErrInvalidId
+	}
 	return nil
 }
 
