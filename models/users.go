@@ -13,13 +13,15 @@ import (
 )
 
 var (
-	ErrNotFound       = errors.New("models: Resource not found")
-	ErrInvalidId      = errors.New("models: Id must be greater than 0")
-	InvalidPassword   = errors.New("models: Password is invalid")
-	EmptyEmail        = errors.New("models: Email is empty")
-	InvalidEmail      = errors.New("models: Email is invalid")
-	EmailAlreadyTaken = errors.New("Email address is already taken")
-	PasswordTooShort  = errors.New("Password must be at least 8 characters long")
+	ErrNotFound             = errors.New("models: Resource not found")
+	ErrInvalidId            = errors.New("models: Id must be greater than 0")
+	InvalidPassword         = errors.New("models: Password is invalid")
+	EmptyEmail              = errors.New("models: Email is empty")
+	InvalidEmail            = errors.New("models: Email is invalid")
+	EmailAlreadyTaken       = errors.New("Email address is already taken")
+	PasswordTooShort        = errors.New("Password must be at least 8 characters long")
+	ErrRememberHashTooShort = errors.New("Remember hash too short")
+	InvalidHash             = errors.New("Remember hash is invalid")
 )
 
 type userService struct {
@@ -80,8 +82,21 @@ func (uv *userValidator) Create(user *User) error {
 
 	}
 
-	if err := runUserValFuncs(user, uv.passwordRequired, uv.passwordMinLength, uv.bcryptPassword, uv.passwordHashRequired, uv.defaultRemember,
-		uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
+	err := runUserValFuncs(user,
+		uv.passwordRequired,
+		uv.passwordMinLength,
+		uv.bcryptPassword,
+		uv.passwordHashRequired,
+		uv.defaultRemember,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emaillFormat,
+		uv.emailIsAvailable)
+
+	if err != nil {
 		return err
 	}
 
@@ -89,8 +104,20 @@ func (uv *userValidator) Create(user *User) error {
 }
 
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.passwordRequired, uv.passwordMinLength, uv.bcryptPassword, uv.passwordHashRequired, uv.hmacRemember,
-		uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
+	err := runUserValFuncs(user,
+		uv.passwordRequired,
+		uv.passwordMinLength,
+		uv.bcryptPassword,
+		uv.passwordHashRequired,
+		uv.rememberMinBytes,
+		uv.hmacRemember,
+		uv.rememberHashRequired,
+		uv.normalizeEmail,
+		uv.requireEmail,
+		uv.emaillFormat,
+		uv.emailIsAvailable)
+
+	if err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -180,6 +207,27 @@ func (uv *userValidator) passwordRequired(user *User) error {
 func (uv *userValidator) passwordHashRequired(user *User) error {
 	if user.PasswordHash == "" {
 		return InvalidPassword
+	}
+	return nil
+}
+
+func (uv *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return InvalidHash
+	}
+	return nil
+}
+
+func (uv *userValidator) rememberMinBytes(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	n, err := rand.NBytes(user.Remember)
+	if err != nil {
+		return err
+	}
+	if n < 32 {
+		return ErrRememberHashTooShort
 	}
 	return nil
 }

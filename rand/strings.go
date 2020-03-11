@@ -36,3 +36,12 @@ func Bytes(n int) ([]byte, error) {
 	}
 	return b, nil
 }
+
+// NBytes base64-decode a string and counts the number of bytes
+func NBytes(base64String string) (int, error) {
+	b, err := base64.RawStdEncoding.DecodeString(base64String)
+	if err != nil {
+		return -1, err
+	}
+	return len(b), nil
+}
