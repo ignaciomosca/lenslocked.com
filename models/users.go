@@ -19,6 +19,7 @@ var (
 	EmptyEmail        = errors.New("models: Email is empty")
 	InvalidEmail      = errors.New("models: Email is invalid")
 	EmailAlreadyTaken = errors.New("Email address is already taken")
+	PasswordTooShort  = errors.New("Password must be at least 8 characters long")
 )
 
 type userService struct {
@@ -79,7 +80,8 @@ func (uv *userValidator) Create(user *User) error {
 
 	}
 
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
+	if err := runUserValFuncs(user, uv.passwordRequired, uv.passwordMinLength, uv.bcryptPassword, uv.passwordHashRequired, uv.defaultRemember,
+		uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
 		return err
 	}
 
@@ -87,7 +89,8 @@ func (uv *userValidator) Create(user *User) error {
 }
 
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
+	if err := runUserValFuncs(user, uv.passwordRequired, uv.passwordMinLength, uv.bcryptPassword, uv.passwordHashRequired, uv.hmacRemember,
+		uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -155,6 +158,30 @@ func (uv *userValidator) emailIsAvailable(user *User) error {
 	}
 	return nil
 
+}
+
+func (uv *userValidator) passwordMinLength(user *User) error {
+	if user.Password == "" {
+		return nil
+	}
+	if len(user.Password) < 8 {
+		return PasswordTooShort
+	}
+	return nil
+}
+
+func (uv *userValidator) passwordRequired(user *User) error {
+	if user.Password == "" {
+		return InvalidPassword
+	}
+	return nil
+}
+
+func (uv *userValidator) passwordHashRequired(user *User) error {
+	if user.PasswordHash == "" {
+		return InvalidPassword
+	}
+	return nil
 }
 
 type userValFunc func(*User) error
