@@ -53,15 +53,21 @@ func fetchFiles() []string {
 	return files
 }
 
-func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	type Alert struct {
-		Level   string
-		Message string
-	}
+type Alert struct {
+	Level   string
+	Message string
+}
 
+type Data struct {
+	Alert Alert
+	Yield interface{}
+}
+
+func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	a := Alert{Level: "success", Message: "successfully rendered a dynamic alert"}
-	if err := v.Render(w, a); err != nil {
+	d := Data{Alert: a, Yield: "hello"}
+	if err := v.Render(w, d); err != nil {
 		panic(err)
 	}
 }
