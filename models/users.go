@@ -13,11 +13,12 @@ import (
 )
 
 var (
-	ErrNotFound     = errors.New("models: Resource not found")
-	ErrInvalidId    = errors.New("models: Id must be greater than 0")
-	InvalidPassword = errors.New("models: Password is invalid")
-	EmptyEmail      = errors.New("models: Email is empty")
-	InvalidEmail    = errors.New("models: Email is invalid")
+	ErrNotFound       = errors.New("models: Resource not found")
+	ErrInvalidId      = errors.New("models: Id must be greater than 0")
+	InvalidPassword   = errors.New("models: Password is invalid")
+	EmptyEmail        = errors.New("models: Email is empty")
+	InvalidEmail      = errors.New("models: Email is invalid")
+	EmailAlreadyTaken = errors.New("Email address is already taken")
 )
 
 type userService struct {
@@ -78,7 +79,7 @@ func (uv *userValidator) Create(user *User) error {
 
 	}
 
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.defaultRemember, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
 		return err
 	}
 
@@ -86,7 +87,7 @@ func (uv *userValidator) Create(user *User) error {
 }
 
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat); err != nil {
+	if err := runUserValFuncs(user, uv.bcryptPassword, uv.hmacRemember, uv.normalizeEmail, uv.requireEmail, uv.emaillFormat, uv.emailIsAvailable); err != nil {
 		return err
 	}
 	return uv.UserDB.Update(user)
@@ -141,6 +142,21 @@ func (uv *userValidator) emaillFormat(user *User) error {
 	return nil
 }
 
+func (uv *userValidator) emailIsAvailable(user *User) error {
+	existing, err := uv.ByEmail(user.Email)
+	if err == ErrNotFound {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if user.ID != existing.ID {
+		return EmailAlreadyTaken
+	}
+	return nil
+
+}
+
 type userValFunc func(*User) error
 
 func runUserValFuncs(user *User, fns ...userValFunc) error {
@@ -171,7 +187,7 @@ func NewUserService(connectionInfo string) (*userService, error) {
 	hmac := hash.NewHMAC(hmacSecretKey)
 
 	ug := userGorm{db: db}
-	uv := &userValidator{UserDB: &ug, hmac: hmac}
+	uv := newUserValidator(&ug, hmac)
 
 	return &userService{UserDB: uv}, nil
 }
