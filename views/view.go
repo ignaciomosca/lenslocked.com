@@ -41,7 +41,15 @@ func addTemplateExt(files []string) {
 
 func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Println("Data", data)
+	switch data.(type) {
+	case Data:
+		//do nothing
+	default:
+		data = Data{
+			Yield: data,
+		}
+
+	}
 	return v.Template.ExecuteTemplate(w, v.Layout, data)
 }
 
@@ -53,21 +61,9 @@ func fetchFiles() []string {
 	return files
 }
 
-type Alert struct {
-	Level   string
-	Message string
-}
-
-type Data struct {
-	Alert Alert
-	Yield interface{}
-}
-
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	a := Alert{Level: "success", Message: "successfully rendered a dynamic alert"}
-	d := Data{Alert: a, Yield: "hello"}
-	if err := v.Render(w, d); err != nil {
+	if err := v.Render(w, nil); err != nil {
 		panic(err)
 	}
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"lenslocked.com/models"
@@ -62,29 +63,50 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Create is used to create a new user account
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	if err := r.ParseForm(); err != nil {
 		panic(err)
 	}
 
-	user := new(SignupForm)
-	if err := parse(r, user); err != nil {
-		panic(err)
+	var form SignupForm
+	if err := parse(r, &form); err != nil {
+		log.Println(err)
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlDanger,
+			Message: err.Error(),
+		}
+		u.NewView.Render(w, vd)
+		return
 	}
 
-	createUser := models.User{Name: user.Name, Email: user.Email, Password: user.Password}
+	createUser := models.User{Name: form.Name, Email: form.Email, Password: form.Password}
 	if err := u.UserService.Create(&createUser); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlDanger,
+			Message: err.Error(),
+		}
+		u.NewView.Render(w, vd)
 		return
 	}
 
 	if err := u.signIn(w, &createUser); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlDanger,
+			Message: err.Error(),
+		}
+		u.NewView.Render(w, vd)
 		return
 	}
-
+	err := u.signIn(w, &createUser)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
 	http.Redirect(w, r, "/cookieTest", http.StatusFound)
-	u.NewView.Render(w, nil)
 }
 
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
