@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -10,18 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"lenslocked.com/hash"
 	"lenslocked.com/rand"
-)
-
-var (
-	ErrNotFound             = errors.New("models: Resource not found")
-	ErrInvalidId            = errors.New("models: Id must be greater than 0")
-	InvalidPassword         = errors.New("models: Password is invalid")
-	EmptyEmail              = errors.New("models: Email is empty")
-	InvalidEmail            = errors.New("models: Email is invalid")
-	EmailAlreadyTaken       = errors.New("Email address is already taken")
-	PasswordTooShort        = errors.New("Password must be at least 8 characters long")
-	ErrRememberHashTooShort = errors.New("Remember hash too short")
-	InvalidHash             = errors.New("Remember hash is invalid")
 )
 
 type userService struct {
@@ -371,7 +358,7 @@ func (uv *userValidator) defaultRemember(user *User) error {
 
 func (uv *userValidator) idGreaterThanZero(user *User) error {
 	if user.ID <= 0 {
-		return ErrInvalidId
+		return ErrInvalidID
 	}
 	return nil
 }
