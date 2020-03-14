@@ -10,12 +10,7 @@ import (
 	"lenslocked.com/views"
 )
 
-func NewUser(connectionInfo string) Users {
-	us, err := models.NewUserService(connectionInfo)
-	if err != nil {
-		panic(err)
-	}
-
+func NewUser(us models.UserService) Users {
 	return Users{
 		NewView:     views.NewFiles("bootstrap", "users/new"),
 		LoginView:   views.NewFiles("bootstrap", "users/login"),

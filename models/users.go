@@ -241,17 +241,12 @@ func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
 	}
 }
 
-func NewUserService(connectionInfo string) (*userService, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
+func NewUserService(db *gorm.DB) *userService {
+	ug := &userGorm{db: db}
 	hmac := hash.NewHMAC(hmacSecretKey)
+	uv := newUserValidator(ug, hmac)
 
-	ug := userGorm{db: db}
-	uv := newUserValidator(&ug, hmac)
-
-	return &userService{UserDB: uv}, nil
+	return &userService{UserDB: uv}
 }
 
 func (ug *userGorm) Update(user *User) error {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"lenslocked.com/controllers"
+	"lenslocked.com/models"
 )
 
 func main() {
@@ -21,8 +22,11 @@ func main() {
 		dbName   = "lenslocked"
 	)
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
-
-	usersController := controllers.NewUser(psqlInfo)
+	services, err := models.NewServices(psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	usersController := controllers.NewUser(services.User)
 
 	r.HandleFunc("/", static.HomeView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/contact", static.ContactView.ServeHTTP).Methods("GET")
