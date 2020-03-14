@@ -374,7 +374,7 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 }
 
 func (ug *userGorm) Error() string {
-	return "Something went wrong"
+	return "Something went wrong with GORM"
 }
 
 type User struct {

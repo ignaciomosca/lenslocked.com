@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 )
@@ -54,7 +55,8 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) {
 	}
 	var buf bytes.Buffer
 	if err := v.Template.ExecuteTemplate(&buf, v.Layout, data); err != nil {
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		log.Println("error", err)
+		http.Error(w, "Something went wrong rendering a page", http.StatusInternalServerError)
 		return
 	}
 	io.Copy(w, &buf)
