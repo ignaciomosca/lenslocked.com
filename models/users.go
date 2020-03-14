@@ -25,7 +25,7 @@ type UserDB interface {
 	Update(user *User) error
 	Delete(id uint) error
 
-	Close() error
+	error
 }
 
 // UserService is a set of methods to manipulate the user model
@@ -296,10 +296,6 @@ func (ug *userGorm) Delete(id uint) error {
 	return ug.db.Delete(&user).Error
 }
 
-func (ug *userGorm) Close() error {
-	return ug.db.Close()
-}
-
 // ById lookups a user by id.
 // If no user exists returns an error
 func (ug *userGorm) ById(id uint) (*User, error) {
@@ -375,6 +371,10 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (ug *userGorm) Error() string {
+	return "Something went wrong"
 }
 
 type User struct {

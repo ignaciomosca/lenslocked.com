@@ -26,6 +26,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer services.Close()
 	usersController := controllers.NewUser(services.User)
 
 	r.HandleFunc("/", static.HomeView.ServeHTTP).Methods("GET")
