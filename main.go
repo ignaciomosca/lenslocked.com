@@ -41,6 +41,7 @@ func main() {
 
 	// Gallery routes
 	r.HandleFunc("/galleries/new", galleriesC.New).Methods("GET")
+	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
 	fmt.Println("Running on port 3000")

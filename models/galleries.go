@@ -1,6 +1,8 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+)
 
 // Gallery is our image container resources that visitors view
 type Gallery struct {
@@ -39,5 +41,6 @@ type galleryGorm struct {
 var _ GalleryDB = &galleryGorm{}
 
 func (gg *galleryGorm) Create(gallery *Gallery) error {
+	gg.db.AutoMigrate(&Gallery{})
 	return gg.db.Create(gallery).Error
 }
