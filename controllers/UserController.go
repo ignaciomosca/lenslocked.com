@@ -52,7 +52,7 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, loginErr)
 	} else {
 		u.signIn(w, loggedUser)
-		http.Redirect(w, r, "/cookieTest", http.StatusFound)
+		http.Redirect(w, r, "/cookietest", http.StatusFound)
 	}
 }
 
@@ -93,13 +93,14 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/cookieTest", http.StatusFound)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("remember_token")
 	if err != nil {
-		panic(err)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
 	}
 	user, err := u.UserService.ByRemember(cookie.Value)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"lenslocked.com/controllers"
+	"lenslocked.com/middleware"
 	"lenslocked.com/models"
 )
 
@@ -32,7 +33,6 @@ func main() {
 
 	r.HandleFunc("/", static.HomeView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/contact", static.ContactView.ServeHTTP).Methods("GET")
-	r.HandleFunc("/faq", static.FAQView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/sign-up", usersController.New).Methods("GET")
 	r.HandleFunc("/sign-up", usersController.Create).Methods("POST")
 	r.HandleFunc("/login", usersController.LoginView.ServeHTTP).Methods("GET")
@@ -40,8 +40,9 @@ func main() {
 	r.HandleFunc("/cookietest", usersController.CookieTest).Methods("GET")
 
 	// Gallery routes
-	r.HandleFunc("/galleries/new", galleriesC.New).Methods("GET")
-	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
+	requireUserMiddleware := middleware.RequireUser{UserService: services.User}
+	r.HandleFunc("/galleries/new", requireUserMiddleware.ApplyFn(galleriesC.New)).Methods("GET")
+	r.HandleFunc("/galleries", requireUserMiddleware.ApplyFn(galleriesC.Create)).Methods("POST")
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
 	fmt.Println("Running on port 3000")
