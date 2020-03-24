@@ -3,6 +3,7 @@ package rand
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 )
 
 const RememberTokenBytes = 32
@@ -32,6 +33,7 @@ func Bytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
 	if err != nil {
+		fmt.Println("Bytes", err)
 		return nil, err
 	}
 	return b, nil
@@ -39,8 +41,9 @@ func Bytes(n int) ([]byte, error) {
 
 // NBytes base64-decode a string and counts the number of bytes
 func NBytes(base64String string) (int, error) {
-	b, err := base64.RawStdEncoding.DecodeString(base64String)
+	b, err := base64.URLEncoding.DecodeString(base64String)
 	if err != nil {
+		fmt.Println("NBytes", err)
 		return -1, err
 	}
 	return len(b), nil

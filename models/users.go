@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -58,41 +59,32 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 	return uv.UserDB.ByRemember(user.RememberHash)
 }
 
+var _ UserDB = &userGorm{}
+
 // Create provider user
 func (uv *userValidator) Create(user *User) error {
-	if user.Remember == "" {
-		token, err := rand.RememberToken()
-		if err != nil {
-			return err
-		}
-		user.Remember = token
-
-	}
-
 	err := runUserValFuncs(user,
 		uv.passwordRequired,
 		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.passwordHashRequired,
 		uv.defaultRemember,
-		uv.rememberMinBytes,
+		// 	uv.rememberMinBytes,
 		uv.hmacRemember,
 		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emaillFormat,
 		uv.emailIsAvailable)
-
 	if err != nil {
+		fmt.Println("error", err)
 		return err
 	}
-
 	return uv.UserDB.Create(user)
 }
 
 func (uv *userValidator) Update(user *User) error {
 	err := runUserValFuncs(user,
-		uv.passwordRequired,
 		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.passwordHashRequired,
@@ -103,7 +95,6 @@ func (uv *userValidator) Update(user *User) error {
 		uv.requireEmail,
 		uv.emaillFormat,
 		uv.emailIsAvailable)
-
 	if err != nil {
 		return err
 	}
@@ -161,10 +152,11 @@ func (uv *userValidator) emaillFormat(user *User) error {
 
 func (uv *userValidator) emailIsAvailable(user *User) error {
 	existing, err := uv.ByEmail(user.Email)
-	if err == ErrNotFound {
+	if err != nil && err.Error() == strings.ToLower(ErrNotFound.Public()) {
 		return nil
 	}
 	if err != nil {
+		fmt.Println("err email is available", err)
 		return err
 	}
 	if user.ID != existing.ID {
@@ -186,7 +178,7 @@ func (uv *userValidator) passwordMinLength(user *User) error {
 
 func (uv *userValidator) passwordRequired(user *User) error {
 	if user.Password == "" {
-		return InvalidPassword
+		return EmptyPassword
 	}
 	return nil
 }
@@ -252,17 +244,11 @@ func NewUserService(db *gorm.DB) *userService {
 func (ug *userGorm) Update(user *User) error {
 	err := ug.db.Save(user).Error
 	if err != nil {
+		fmt.Println("Updating")
 		return err
 	}
 	return ug.db.Save(user).Error
 }
-
-// func (uv UserValidator) ById(id uint) (*User, error) {
-// 	if id <= 0 {
-// 		return nil, ErrInvalidId
-// 	}
-// 	return uv.UserDB.ById(id)
-// }
 
 func (us *userService) Login(email, password string) (*User, error) {
 	user, err := us.ByEmail(email)
@@ -273,6 +259,7 @@ func (us *userService) Login(email, password string) (*User, error) {
 	if err != nil {
 		switch err {
 		case bcrypt.ErrMismatchedHashAndPassword:
+			fmt.Println("Failed login")
 			return nil, InvalidPassword
 		default:
 			return nil, err
@@ -359,6 +346,7 @@ const hmacSecretKey = "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7
 
 // Create provider user
 func (ug *userGorm) Create(user *User) error {
+	fmt.Println("Saving user to gorm")
 	return ug.db.Create(user).Error
 }
 
@@ -380,7 +368,7 @@ func (ug *userGorm) Error() string {
 type User struct {
 	gorm.Model
 	Name         string
-	Email        string
+	Email        string `gorm:"not null;unique_index"`
 	Password     string `gorm:"-"`
 	PasswordHash string
 	Remember     string `gorm:"-"`

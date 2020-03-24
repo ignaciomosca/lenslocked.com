@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"lenslocked.com/models"
@@ -51,6 +50,7 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	if loginErr != nil {
 		fmt.Fprintln(w, loginErr)
 	} else {
+		fmt.Println("Login Finished. User", loggedUser)
 		u.signIn(w, loggedUser)
 		http.Redirect(w, r, "/cookietest", http.StatusFound)
 	}
@@ -59,36 +59,23 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 // Create is used to create a new user account
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
-	if err := r.ParseForm(); err != nil {
-		panic(err)
-	}
-
 	var form SignupForm
 	if err := parse(r, &form); err != nil {
-		log.Println(err)
 		vd.SetAlert(err)
 		u.NewView.Render(w, vd)
 		return
 	}
-
-	createUser := models.User{Name: form.Name, Email: form.Email, Password: form.Password}
-	if err := u.UserService.Create(&createUser); err != nil {
-		log.Println(err)
+	user := models.User{
+		Name:     form.Name,
+		Email:    form.Email,
+		Password: form.Password,
+	}
+	if err := u.UserService.Create(&user); err != nil {
 		vd.SetAlert(err)
 		u.NewView.Render(w, vd)
 		return
 	}
-
-	if err := u.signIn(w, &createUser); err != nil {
-		log.Println(err)
-		vd.Alert = &views.Alert{
-			Level:   views.AlertLvlDanger,
-			Message: err.Error(),
-		}
-		u.NewView.Render(w, vd)
-		return
-	}
-	err := u.signIn(w, &createUser)
+	err := u.signIn(w, &user)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
@@ -118,12 +105,13 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 		user.Remember = token
 		err = u.UserService.Update(user)
 		if err != nil {
+			fmt.Println("Error 2", err)
 			return err
 		}
 	}
 
+	fmt.Println("Cookie", user.Remember)
 	cookie := http.Cookie{Name: "remember_token", Value: user.Remember, HttpOnly: true}
 	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, u)
 	return nil
 }

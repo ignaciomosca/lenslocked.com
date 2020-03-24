@@ -3,9 +3,10 @@ package models
 import "strings"
 
 var (
-	ErrNotFound             modelError = "models: Resource not found"
+	ErrNotFound             modelError = "models: record not found"
 	ErrInvalidID            modelError = "models: Id must be greater than 0"
 	InvalidPassword         modelError = "models: Password is invalid"
+	EmptyPassword           modelError = "models: Password is empty"
 	EmptyEmail              modelError = "models: Email is empty"
 	InvalidEmail            modelError = "models: Email is invalid"
 	EmailAlreadyTaken       modelError = "Email address is already taken"
@@ -22,5 +23,7 @@ func (e modelError) Error() string {
 
 func (e modelError) Public() string {
 	s := strings.Replace(string(e), "models: ", "", 1)
-	return strings.Title(s)
+	split := strings.Split(s, " ")
+	split[0] = strings.Title(split[0])
+	return strings.Join(split, " ")
 }
