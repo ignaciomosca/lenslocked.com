@@ -43,6 +43,7 @@ func main() {
 	requireUserMiddleware := middleware.RequireUser{UserService: services.User}
 	r.HandleFunc("/galleries/new", requireUserMiddleware.ApplyFn(galleriesC.New)).Methods("GET")
 	r.HandleFunc("/galleries", requireUserMiddleware.ApplyFn(galleriesC.Create)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMiddleware.ApplyFn(galleriesC.Edit)).Methods("GET")
 	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET").Name("show_gallery")
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
