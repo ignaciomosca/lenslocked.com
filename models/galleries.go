@@ -15,7 +15,23 @@ type GalleryService interface {
 	GalleryDB
 }
 type GalleryDB interface {
+	ById(id uint) (*Gallery, error)
 	Create(gallery *Gallery) error
+}
+
+// ById lookups a gallery by id.
+// If no gallery exists returns an error
+func (gg *galleryGorm) ById(id uint) (*Gallery, error) {
+	var gallery Gallery
+	err := gg.db.Where("id = ?", id).First(&gallery).Error
+	switch err {
+	case nil:
+		return &gallery, nil
+	case gorm.ErrRecordNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
 }
 
 type galleryValidator struct {

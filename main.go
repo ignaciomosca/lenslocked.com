@@ -29,7 +29,7 @@ func main() {
 	}
 	defer services.Close()
 	usersController := controllers.NewUser(services.User)
-	galleriesC := controllers.NewGallery(services.Gallery)
+	galleriesC := controllers.NewGallery(services.Gallery, r)
 
 	r.HandleFunc("/", static.HomeView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/contact", static.ContactView.ServeHTTP).Methods("GET")
@@ -43,6 +43,7 @@ func main() {
 	requireUserMiddleware := middleware.RequireUser{UserService: services.User}
 	r.HandleFunc("/galleries/new", requireUserMiddleware.ApplyFn(galleriesC.New)).Methods("GET")
 	r.HandleFunc("/galleries", requireUserMiddleware.ApplyFn(galleriesC.Create)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET").Name("show_gallery")
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
 	fmt.Println("Running on port 3000")
