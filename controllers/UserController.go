@@ -9,6 +9,7 @@ import (
 	"lenslocked.com/views"
 )
 
+// NewUser creates the controller for the operations linked with user management
 func NewUser(us models.UserService) Users {
 	return Users{
 		NewView:     views.NewFiles("bootstrap", "users/new"),
@@ -23,12 +24,14 @@ type Users struct {
 	UserService models.UserService
 }
 
+// SignupForm represents the data in the signup form
 type SignupForm struct {
 	Name     string `schema:"name"`
 	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
 
+// LoginForm represents the data in the login form
 type LoginForm struct {
 	Email    string `schema:"email"`
 	Password string `schema:"password"`

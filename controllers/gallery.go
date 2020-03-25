@@ -12,6 +12,7 @@ import (
 	"lenslocked.com/views"
 )
 
+// NewGallery creates a new GalleryService with it's associated views
 func NewGallery(gs models.GalleryService, r *mux.Router) Galleries {
 	return Galleries{
 		NewView:        views.NewFiles("bootstrap", "galleries/new"),
@@ -22,10 +23,12 @@ func NewGallery(gs models.GalleryService, r *mux.Router) Galleries {
 	}
 }
 
+// New renders the view to create a new Gallery
 func (g *Galleries) New(w http.ResponseWriter, r *http.Request) {
 	g.NewView.Render(w, nil)
 }
 
+// Galleries contains views and services needed to interact with the galleries table
 type Galleries struct {
 	NewView        *views.View
 	ShowView       *views.View
