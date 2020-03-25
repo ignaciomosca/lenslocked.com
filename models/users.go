@@ -152,7 +152,9 @@ func (uv *userValidator) emaillFormat(user *User) error {
 
 func (uv *userValidator) emailIsAvailable(user *User) error {
 	existing, err := uv.ByEmail(user.Email)
-	if err != nil && err.Error() == strings.ToLower(ErrNotFound.Public()) {
+	fmt.Println("ErrNotFound", ErrNotFound)
+	fmt.Println("err", err)
+	if err != nil && err == ErrNotFound {
 		return nil
 	}
 	if err != nil {
@@ -271,11 +273,9 @@ func (us *userService) Login(email, password string) (*User, error) {
 
 func (ug *userGorm) ByEmail(email string) (*User, error) {
 	var user User
-	err := ug.db.Where("email = ?", email).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	db := ug.db.Where("email = ?", email)
+	err := first(db, &user)
+	return &user, err
 }
 
 func (ug *userGorm) Delete(id uint) error {
