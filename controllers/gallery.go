@@ -18,6 +18,7 @@ func NewGallery(gs models.GalleryService, r *mux.Router) Galleries {
 		NewView:        views.NewFiles("bootstrap", "galleries/new"),
 		ShowView:       views.NewFiles("bootstrap", "galleries/show"),
 		EditView:       views.NewFiles("bootstrap", "galleries/edit"),
+		IndexView:      views.NewFiles("bootstrap", "galleries/index"),
 		GalleryService: gs,
 		router:         r,
 	}
@@ -33,12 +34,26 @@ type Galleries struct {
 	NewView        *views.View
 	ShowView       *views.View
 	EditView       *views.View
+	IndexView      *views.View
 	GalleryService models.GalleryService
 	router         *mux.Router
 }
 
 type GalleryForm struct {
 	Title string `schema:"title"`
+}
+
+// GET /galleries
+func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
+	user := context.User(r.Context())
+	galleries, err := g.GalleryService.ByUserId(user.ID)
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+	var vd views.Data
+	vd.Yield = galleries
+	g.IndexView.Render(w, vd)
 }
 
 // GET /galleries/:id

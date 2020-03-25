@@ -25,6 +25,7 @@ type GalleryDB interface {
 	Create(gallery *Gallery) error
 	Update(gallery *Gallery) error
 	Delete(id uint) error
+	ByUserId(userId uint) ([]Gallery, error)
 }
 
 // ById lookups a gallery by id.
@@ -129,6 +130,15 @@ func (gg *galleryGorm) Update(gallery *Gallery) error {
 func (gg *galleryGorm) Delete(id uint) error {
 	gallery := Gallery{Model: gorm.Model{ID: id}}
 	return gg.db.Delete(&gallery).Error
+}
+
+func (gg *galleryGorm) ByUserId(userId uint) ([]Gallery, error) {
+	var galleries []Gallery
+	err := gg.db.Where("user_id = ?", userId).Find(&galleries).Error
+	if err != nil {
+		return nil, err
+	}
+	return galleries, nil
 }
 
 type galleryValFn func(*Gallery) error
