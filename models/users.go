@@ -152,13 +152,10 @@ func (uv *userValidator) emaillFormat(user *User) error {
 
 func (uv *userValidator) emailIsAvailable(user *User) error {
 	existing, err := uv.ByEmail(user.Email)
-	fmt.Println("ErrNotFound", ErrNotFound)
-	fmt.Println("err", err)
 	if err != nil && err == ErrNotFound {
 		return nil
 	}
 	if err != nil {
-		fmt.Println("err email is available", err)
 		return err
 	}
 	if user.ID != existing.ID {
@@ -273,6 +270,7 @@ func (us *userService) Login(email, password string) (*User, error) {
 
 func (ug *userGorm) ByEmail(email string) (*User, error) {
 	var user User
+	ug.db.AutoMigrate(&User{})
 	db := ug.db.Where("email = ?", email)
 	err := first(db, &user)
 	return &user, err
@@ -346,7 +344,7 @@ const hmacSecretKey = "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7
 
 // Create provider user
 func (ug *userGorm) Create(user *User) error {
-	fmt.Println("Saving user to gorm")
+	ug.db.AutoMigrate(&User{})
 	return ug.db.Create(user).Error
 }
 
@@ -354,6 +352,7 @@ func (ug *userGorm) Create(user *User) error {
 // This method expects the remember token to already be hashed.
 func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	var user User
+	ug.db.AutoMigrate(&User{})
 	err := first(ug.db.Where("remember_hash = ?", rememberHash), &user)
 	if err != nil {
 		return nil, err

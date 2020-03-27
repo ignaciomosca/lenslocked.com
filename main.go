@@ -31,25 +31,30 @@ func main() {
 	usersController := controllers.NewUser(services.User)
 	galleriesC := controllers.NewGallery(services.Gallery, r)
 
+	userMw := middleware.User{
+		UserService: services.User,
+	}
+	requireUserMw := middleware.RequireUser{
+		User: userMw,
+	}
+
 	r.HandleFunc("/", static.HomeView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/contact", static.ContactView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/sign-up", usersController.New).Methods("GET")
 	r.HandleFunc("/sign-up", usersController.Create).Methods("POST")
 	r.HandleFunc("/login", usersController.LoginView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/login", usersController.SignIn).Methods("POST")
-	r.HandleFunc("/cookietest", usersController.CookieTest).Methods("GET")
 
 	// Gallery routes
-	requireUserMiddleware := middleware.RequireUser{UserService: services.User}
-	r.HandleFunc("/galleries", requireUserMiddleware.ApplyFn(galleriesC.Index)).Methods("GET")
-	r.HandleFunc("/galleries/new", requireUserMiddleware.ApplyFn(galleriesC.New)).Methods("GET")
-	r.HandleFunc("/galleries", requireUserMiddleware.ApplyFn(galleriesC.Create)).Methods("POST")
-	r.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMiddleware.ApplyFn(galleriesC.Edit)).Methods("GET").Name("edit_gallery")
-	r.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMiddleware.ApplyFn(galleriesC.Update)).Methods("POST").Name("update_gallery")
-	r.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMiddleware.ApplyFn(galleriesC.Delete)).Methods("POST").Name("delete_gallery")
+	r.HandleFunc("/galleries", requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET")
+	r.HandleFunc("/galleries/new", requireUserMw.ApplyFn(galleriesC.New)).Methods("GET")
+	r.HandleFunc("/galleries", requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}/edit", requireUserMw.ApplyFn(galleriesC.Edit)).Methods("GET").Name("edit_gallery")
+	r.HandleFunc("/galleries/{id:[0-9]+}/update", requireUserMw.ApplyFn(galleriesC.Update)).Methods("POST").Name("update_gallery")
+	r.HandleFunc("/galleries/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleriesC.Delete)).Methods("POST").Name("delete_gallery")
 	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET").Name("show_gallery")
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
 	fmt.Println("Running on port 3000")
-	log.Fatal(http.ListenAndServe(":3000", r))
+	log.Fatal(http.ListenAndServe(":3000", userMw.Apply(r)))
 }

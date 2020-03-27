@@ -38,7 +38,7 @@ type LoginForm struct {
 }
 
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	u.NewView.Render(w, nil)
+	u.NewView.Render(w, r, nil)
 }
 
 func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +55,7 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Println("Login Finished. User", loggedUser)
 		u.signIn(w, loggedUser)
-		http.Redirect(w, r, "/cookietest", http.StatusFound)
+		http.Redirect(w, r, "/galleries", http.StatusFound)
 	}
 }
 
@@ -65,7 +65,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var form SignupForm
 	if err := parse(r, &form); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(w, vd)
+		u.NewView.Render(w, r, vd)
 		return
 	}
 	user := models.User{
@@ -75,7 +75,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := u.UserService.Create(&user); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(w, vd)
+		u.NewView.Render(w, r, vd)
 		return
 	}
 	err := u.signIn(w, &user)
@@ -83,20 +83,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/cookietest", http.StatusFound)
-}
-
-func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("remember_token")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-	user, err := u.UserService.ByRemember(cookie.Value)
-	if err != nil {
-		return
-	}
-	fmt.Fprintln(w, user)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {

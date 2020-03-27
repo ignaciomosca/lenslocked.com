@@ -1,5 +1,7 @@
 package views
 
+import "lenslocked.com/models"
+
 const (
 	AlertLvlDanger  = "danger"
 	AlertLvlWarning = "warning"
@@ -15,6 +17,7 @@ type Alert struct {
 
 type Data struct {
 	Alert *Alert
+	User  *models.User
 	Yield interface{}
 }
 
