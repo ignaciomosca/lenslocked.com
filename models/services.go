@@ -10,6 +10,7 @@ func NewServices(connectionInfo string) (*Services, error) {
 		return nil, err
 	}
 	db.LogMode(true)
+	db.AutoMigrate(&User{}, &Gallery{})
 	return &Services{
 		User:    NewUserService(db),
 		Gallery: NewGalleryService(db),

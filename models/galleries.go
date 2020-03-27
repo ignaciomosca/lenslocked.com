@@ -119,7 +119,6 @@ type galleryGorm struct {
 var _ GalleryDB = &galleryGorm{}
 
 func (gg *galleryGorm) Create(gallery *Gallery) error {
-	gg.db.AutoMigrate(&Gallery{})
 	return gg.db.Create(gallery).Error
 }
 
