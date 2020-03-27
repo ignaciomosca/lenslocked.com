@@ -133,8 +133,9 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 		vd.SetAlert(err)
 		vd.Yield = gallery
 		g.EditView.Render(w, r, vd)
+		return
 	}
-	fmt.Fprintln(w, "successfully deleted")
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (g *Galleries) getGalleryByID(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
@@ -156,35 +157,30 @@ func (g *Galleries) getGalleryByID(w http.ResponseWriter, r *http.Request) (*mod
 // Create is used to create a new gallery
 func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
-	if err := r.ParseForm(); err != nil {
-		panic(err)
-	}
-
 	var form GalleryForm
 	if err := parse(r, &form); err != nil {
-		log.Println(err)
 		vd.SetAlert(err)
 		g.NewView.Render(w, r, vd)
 		return
 	}
 
 	user := context.User(r.Context())
-	fmt.Println("Create got the user", user)
+	log.Println("Create got the user", user)
 	if user == nil {
+		log.Println("User not found")
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 	gallery := models.Gallery{Title: form.Title, UserID: user.ID}
 	if err := g.GalleryService.Create(&gallery); err != nil {
-		log.Println(err)
 		vd.SetAlert(err)
 		g.NewView.Render(w, r, vd)
 		return
 	}
-	vd.Yield = gallery
-	url, err := g.router.Get("show_gallery").URL(string(gallery.ID))
+	url, err := g.router.Get("show_gallery").URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
+		log.Println(err)
+		http.Redirect(w, r, "/galleries", http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, url.Path, http.StatusFound)
