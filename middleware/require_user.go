@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
 	"lenslocked.com/context"
@@ -17,9 +16,6 @@ type RequireUser struct {
 }
 
 func (mw *User) Apply(next http.Handler) http.HandlerFunc {
-	return mw.ApplyFn(next.ServeHTTP)
-}
-func (mw *RequireUser) Apply(next http.Handler) http.HandlerFunc {
 	return mw.ApplyFn(next.ServeHTTP)
 }
 
@@ -38,10 +34,14 @@ func (mw *User) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 		ctx := r.Context()
 		ctx = context.WithUser(ctx, user)
 		r = r.WithContext(ctx)
-		fmt.Fprintln(w, user)
 		next(w, r)
 	})
 }
+
+func (mw *RequireUser) Apply(next http.Handler) http.HandlerFunc {
+	return mw.ApplyFn(next.ServeHTTP)
+}
+
 func (mw *RequireUser) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	ourHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := context.User(r.Context())

@@ -343,7 +343,6 @@ const hmacSecretKey = "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7
 
 // Create provider user
 func (ug *userGorm) Create(user *User) error {
-
 	return ug.db.Create(user).Error
 }
 
