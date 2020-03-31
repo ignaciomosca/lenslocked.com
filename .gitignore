@@ -16,3 +16,6 @@ tmp/
 
 # Don't include our binary
 lenslocked.com
+
+# Don't include our images
+images/**
