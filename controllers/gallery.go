@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -19,12 +17,13 @@ const (
 )
 
 // NewGallery creates a new GalleryService with it's associated views
-func NewGallery(gs models.GalleryService, r *mux.Router) Galleries {
+func NewGallery(gs models.GalleryService, is models.ImageService, r *mux.Router) Galleries {
 	return Galleries{
 		NewView:        views.NewFiles("bootstrap", "galleries/new"),
 		ShowView:       views.NewFiles("bootstrap", "galleries/show"),
 		EditView:       views.NewFiles("bootstrap", "galleries/edit"),
 		IndexView:      views.NewFiles("bootstrap", "galleries/index"),
+		ImageService:   is,
 		GalleryService: gs,
 		router:         r,
 	}
@@ -42,6 +41,7 @@ type Galleries struct {
 	EditView       *views.View
 	IndexView      *views.View
 	GalleryService models.GalleryService
+	ImageService   models.ImageService
 	router         *mux.Router
 }
 
@@ -109,15 +109,6 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create the directory to contain our images
-	galleryPath := fmt.Sprintf("images/galleries/%v/", gallery.ID)
-	err = os.MkdirAll(galleryPath, 0755)
-	if err != nil {
-		vd.SetAlert(err)
-		g.EditView.Render(w, r, vd)
-		return
-	}
-
 	files := r.MultipartForm.File["images"]
 	for _, f := range files {
 		file, err := f.Open()
@@ -127,11 +118,7 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
-
-		dst, err := os.Create(galleryPath + f.Filename)
-		defer dst.Close()
-
-		_, err = io.Copy(dst, file)
+		err = g.ImageService.Create(gallery.ID, file, f.Filename)
 		if err != nil {
 			vd.SetAlert(err)
 			g.EditView.Render(w, r, vd)

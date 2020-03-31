@@ -29,7 +29,7 @@ func main() {
 	}
 	defer services.Close()
 	usersController := controllers.NewUser(services.User)
-	galleriesC := controllers.NewGallery(services.Gallery, r)
+	galleriesC := controllers.NewGallery(services.Gallery, services.Image, r)
 
 	userMw := middleware.User{
 		UserService: services.User,
