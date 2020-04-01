@@ -5,13 +5,28 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 )
 
+type Image struct {
+	GalleryID uint
+	Filename  string
+}
+
+func (i *Image) Path() string {
+	return "/" + i.RelativePath()
+}
+
+func (i *Image) RelativePath() string {
+	return fmt.Sprintf("images/galleries/%v/%v", i.GalleryID, i.Filename)
+}
+
 type ImageService interface {
 	Create(galleryId uint, r io.ReadCloser, filename string) error
-	ByGalleryID(galleryID uint) ([]string, error)
+	ByGalleryID(galleryID uint) ([]Image, error)
+	Delete(image *Image) error
 }
 
 type imageService struct {
@@ -35,16 +50,30 @@ func (is *imageService) Create(galleryId uint, r io.ReadCloser, filename string)
 	return nil
 }
 
-func (is *imageService) ByGalleryID(galleryID uint) ([]string, error) {
+func (is *imageService) ByGalleryID(galleryID uint) ([]Image, error) {
 	path := is.imagePath(galleryID)
-	strings, err := filepath.Glob(path + "*")
+	stringNames, err := filepath.Glob(path + "*")
 	if err != nil {
 		return nil, err
 	}
-	for i := range strings {
-		strings[i] = "/" + strings[i]
+	ret := make([]Image, len(stringNames))
+	for i := range stringNames {
+		stringNames[i] = strings.Replace(stringNames[i], path, "", 1)
+		ret[i] = Image{
+			GalleryID: galleryID,
+			Filename:  stringNames[i],
+		}
 	}
-	return strings, nil
+	return ret, nil
+}
+
+func (is *imageService) Delete(i *Image) error {
+	r := os.Remove(i.RelativePath())
+	if r != nil {
+		panic(r)
+		return r
+	}
+	return r
 }
 
 func (is *imageService) imagePath(galleryID uint) string {
