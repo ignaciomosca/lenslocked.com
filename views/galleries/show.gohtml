@@ -3,8 +3,12 @@
     <div class="col-md-12">
         <h1>{{.Title}}</h1>
     </div>
-    <pre>
-        {{.}}
-    </pre>
+    <ul>
+    {{range .Images}}
+        <li>
+            {{.}}
+        </li>
+    {{end}}
+    </ul>
 </div>
 {{end}}

@@ -125,7 +125,11 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Fprintln(w, "Files uploaded successfully")
+	url, err := g.router.Get("edit_gallery").URL("id", fmt.Sprintf("%v", gallery.ID))
+	if err != nil {
+		http.Redirect(w, r, "/galleries", http.StatusFound)
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 // GET /galleries/:id/update
@@ -191,12 +195,14 @@ func (g *Galleries) getGalleryByID(w http.ResponseWriter, r *http.Request) (*mod
 		http.Error(w, "Gallery not found", http.StatusNotFound)
 		return nil, err
 	}
-	res, err := g.GalleryService.ById(uint(id))
+	gallery, err := g.GalleryService.ById(uint(id))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil, err
 	}
-	return res, nil
+	images, _ := g.ImageService.ByGalleryID(uint(id))
+	gallery.Images = images
+	return gallery, nil
 }
 
 // Create is used to create a new gallery
