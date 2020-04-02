@@ -1,6 +1,8 @@
 package models
 
 import (
+	"log"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -148,6 +150,7 @@ func (gg *galleryGorm) ByUserId(userID uint) ([]Gallery, error) {
 	var galleries []Gallery
 	err := gg.db.Where("user_id = ?", userID).Find(&galleries).Error
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	return galleries, nil

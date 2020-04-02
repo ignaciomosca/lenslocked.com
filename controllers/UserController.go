@@ -42,21 +42,26 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	if err := r.ParseForm(); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
 	}
 	login := new(LoginForm)
 	if err := parse(r, login); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
 	}
 	loggedUser, loginErr := u.UserService.Login(login.Email, login.Password)
 	if loginErr != nil {
-		fmt.Fprintln(w, loginErr)
-	} else {
-		fmt.Println("Login Finished. User", loggedUser)
-		u.signIn(w, loggedUser)
-		http.Redirect(w, r, "/galleries", http.StatusFound)
+		vd.SetAlert(loginErr)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
 	}
+	u.signIn(w, loggedUser)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 // Create is used to create a new user account

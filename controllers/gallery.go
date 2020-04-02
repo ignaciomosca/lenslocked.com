@@ -54,7 +54,13 @@ func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
 	user := context.User(r.Context())
 	galleries, err := g.GalleryService.ByUserId(user.ID)
 	if err != nil {
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		switch err {
+		case models.ErrNotFound:
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+		default:
+			log.Println(err)
+			http.Error(w, "Something went wrong", http.StatusNotFound)
+		}
 		return
 	}
 	var vd views.Data
@@ -225,6 +231,7 @@ func (g *Galleries) getGalleryByID(w http.ResponseWriter, r *http.Request) (*mod
 	idString := vars["id"]
 	id, err := strconv.Atoi(idString)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Gallery not found", http.StatusNotFound)
 		return nil, err
 	}
@@ -249,12 +256,6 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := context.User(r.Context())
-	log.Println("Create got the user", user)
-	if user == nil {
-		log.Println("User not found")
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
 	gallery := models.Gallery{Title: form.Title, UserID: user.ID}
 	if err := g.GalleryService.Create(&gallery); err != nil {
 		vd.SetAlert(err)

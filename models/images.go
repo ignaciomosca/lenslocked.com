@@ -68,12 +68,7 @@ func (is *imageService) ByGalleryID(galleryID uint) ([]Image, error) {
 }
 
 func (is *imageService) Delete(i *Image) error {
-	r := os.Remove(i.RelativePath())
-	if r != nil {
-		panic(r)
-		return r
-	}
-	return r
+	return os.Remove(i.RelativePath())
 }
 
 func (is *imageService) imagePath(galleryID uint) string {
