@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"lenslocked.com/controllers"
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
+	"lenslocked.com/rand"
 )
 
 func main() {
@@ -30,6 +32,13 @@ func main() {
 	defer services.Close()
 	usersController := controllers.NewUser(services.User)
 	galleriesC := controllers.NewGallery(services.Gallery, services.Image, r)
+
+	//CSRF
+	csrfSeed, err := rand.Bytes(32)
+	must(err)
+	// TODO: update this to be a config variable
+	isProd := false
+	csrfMw := csrf.Protect(csrfSeed, csrf.Secure(isProd))
 
 	userMw := middleware.User{
 		UserService: services.User,
@@ -67,5 +76,11 @@ func main() {
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
 	fmt.Println("Running on port 3000")
-	log.Fatal(http.ListenAndServe(":3000", userMw.Apply(r)))
+	log.Fatal(http.ListenAndServe(":3000", csrfMw(userMw.Apply(r))))
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

@@ -1,5 +1,6 @@
 {{define "yield"}}
 <form action="/login" method="POST">
+  {{csrfField}}
   <div class="form-group">
     <label for="email" class="col-form-label">Email address</label>
     <input type="email" class="form-control col-sm-6" id="email" name="email" placeholder="Email">
