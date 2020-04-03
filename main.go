@@ -49,6 +49,11 @@ func main() {
 	imageHandler := http.FileServer(http.Dir("./images/"))
 	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
 
+	// Assets
+	assetHandler := http.FileServer(http.Dir("./assets/"))
+	assetHandler = http.StripPrefix("/assets/", assetHandler)
+	r.PathPrefix("/assets/").Handler(assetHandler)
+
 	// Gallery routes
 	r.HandleFunc("/galleries", requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET")
 	r.HandleFunc("/galleries/new", requireUserMw.ApplyFn(galleriesC.New)).Methods("GET")
