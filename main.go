@@ -17,15 +17,9 @@ func main() {
 	r := mux.NewRouter()
 	static := controllers.NewStatic()
 
-	const (
-		host     = "localhost"
-		port     = 5432
-		user     = "postgres"
-		password = "postgres"
-		dbName   = "lenslocked"
-	)
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
-	services, err := models.NewServices(psqlInfo)
+	cfg := DefaultConfig()
+	dbCfg := DefaultPosgresConfig()
+	services, err := models.NewServices(dbCfg.Dialect(), dbCfg.ConnectionInfo())
 	if err != nil {
 		panic(err)
 	}
@@ -75,8 +69,11 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET").Name("show_gallery")
 
 	r.NotFoundHandler = http.HandlerFunc(static.NotFoundView.ServeHTTP)
+
+	p := fmt.Sprintf(":%d", cfg.Port)
+
 	fmt.Println("Running on port 3000")
-	log.Fatal(http.ListenAndServe(":3000", csrfMw(userMw.Apply(r))))
+	log.Fatal(http.ListenAndServe(p, csrfMw(userMw.Apply(r))))
 }
 
 func must(err error) {
