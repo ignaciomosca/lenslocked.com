@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/jinzhu/gorm"
 )
 
 type Image struct {
@@ -36,7 +34,7 @@ type ImageService interface {
 type imageService struct {
 }
 
-func NewImageService(db *gorm.DB) ImageService {
+func NewImageService() ImageService {
 	return &imageService{}
 }
 

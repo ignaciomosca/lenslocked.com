@@ -14,6 +14,7 @@ import (
 
 type userService struct {
 	UserDB
+	passwordPepper string
 }
 
 // UserDB interacts with the user database
@@ -44,8 +45,9 @@ type userGorm struct {
 
 type userValidator struct {
 	UserDB
-	hmac       hash.HMAC
-	emailRegex *regexp.Regexp
+	hmac           hash.HMAC
+	emailRegex     *regexp.Regexp
+	passwordPepper string
 }
 
 // ByRemember will hash the remember token and then call ByRemember on the UserDB layer.
@@ -224,20 +226,24 @@ func runUserValFuncs(user *User, fns ...userValFunc) error {
 var _ UserService = &userService{}
 var _ UserDB = &userValidator{}
 
-func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+func newUserValidator(udb UserDB, hmac hash.HMAC, pepper string) *userValidator {
 	return &userValidator{
-		UserDB:     udb,
-		hmac:       hmac,
-		emailRegex: regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
+		UserDB:         udb,
+		hmac:           hmac,
+		emailRegex:     regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
+		passwordPepper: pepper,
 	}
 }
 
-func NewUserService(db *gorm.DB) *userService {
+func NewUserService(db *gorm.DB, pepper, hmacKey string) *userService {
 	ug := &userGorm{db: db}
-	hmac := hash.NewHMAC(hmacSecretKey)
-	uv := newUserValidator(ug, hmac)
+	hmac := hash.NewHMAC(hmacKey)
+	uv := newUserValidator(ug, hmac, pepper)
 
-	return &userService{UserDB: uv}
+	return &userService{
+		UserDB:         uv,
+		passwordPepper: pepper,
+	}
 }
 
 func (ug *userGorm) Update(user *User) error {
@@ -254,7 +260,7 @@ func (us *userService) Login(email, password string) (*User, error) {
 	if err != nil {
 		return nil, ErrNotFound
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+passwordPepper))
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+us.passwordPepper))
 	if err != nil {
 		switch err {
 		case bcrypt.ErrMismatchedHashAndPassword:
@@ -301,7 +307,7 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	if user.Password == "" {
 		return nil
 	}
-	passwordBytes := []byte(user.Password + passwordPepper)
+	passwordBytes := []byte(user.Password + uv.passwordPepper)
 	hashPassword, err := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -337,9 +343,6 @@ func (uv *userValidator) idGreaterThanZero(user *User) error {
 	}
 	return nil
 }
-
-const passwordPepper = "cC242xTzSG!6j!mWd2N3Vg3!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!"
-const hmacSecretKey = "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!"
 
 // Create provider user
 func (ug *userGorm) Create(user *User) error {

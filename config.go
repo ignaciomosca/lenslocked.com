@@ -5,7 +5,7 @@ import "fmt"
 type PostgresConfig struct {
 	Host     string `json:"host"`
 	Port     string `json:"port"`
-	User     string ` json:"user"`
+	User     string `json:"user"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
 }
@@ -19,8 +19,10 @@ func (c PostgresConfig) ConnectionInfo() string {
 }
 
 type Config struct {
-	Port int
-	Env  string
+	Port    int    `json:"port"`
+	Env     string `json:"env"`
+	Pepper  string `json:"pepper"`
+	HMACKey string `json:"hmac_key"`
 }
 
 func (c Config) IsProd() bool {
@@ -29,8 +31,10 @@ func (c Config) IsProd() bool {
 
 func DefaultConfig() Config {
 	return Config{
-		Port: 3000,
-		Env:  "dev",
+		Port:    3000,
+		Env:     "dev",
+		Pepper:  "cC242xTzSG!6j!mWd2N3Vg3!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!",
+		HMACKey: "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!",
 	}
 }
 
