@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
 
 type PostgresConfig struct {
 	Host     string `json:"host"`
@@ -19,10 +23,11 @@ func (c PostgresConfig) ConnectionInfo() string {
 }
 
 type Config struct {
-	Port    int    `json:"port"`
-	Env     string `json:"env"`
-	Pepper  string `json:"pepper"`
-	HMACKey string `json:"hmac_key"`
+	Port     int            `json:"port"`
+	Env      string         `json:"env"`
+	Pepper   string         `json:"pepper"`
+	HMACKey  string         `json:"hmac_key"`
+	Database PostgresConfig `json:"database"`
 }
 
 func (c Config) IsProd() bool {
@@ -31,10 +36,11 @@ func (c Config) IsProd() bool {
 
 func DefaultConfig() Config {
 	return Config{
-		Port:    3000,
-		Env:     "dev",
-		Pepper:  "cC242xTzSG!6j!mWd2N3Vg3!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!",
-		HMACKey: "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!",
+		Port:     3000,
+		Env:      "dev",
+		Pepper:   "cC242xTzSG!6j!mWd2N3Vg3!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!",
+		HMACKey:  "cC242xTzSG!6j!mWd2N3Vh4!!Q38wunu23a6YBUTm@e**GyP@!CyAzjW7JcR7*p!^524sNxs9H7RQkh3^xH3Q4eSFQtQNqnXqW!",
+		Database: DefaultPosgresConfig(),
 	}
 }
 
@@ -46,4 +52,23 @@ func DefaultPosgresConfig() PostgresConfig {
 		Password: "postgres",
 		Name:     "lenslocked",
 	}
+}
+
+func LoadConfig(isProd bool) Config {
+	f, err := os.Open(".config")
+	if err != nil {
+		if isProd {
+			panic(err)
+		}
+		fmt.Println("Using the default config...")
+		return DefaultConfig()
+	}
+	var c Config
+	dec := json.NewDecoder(f)
+	err = dec.Decode(&c)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Successfully loaded .config")
+	return c
 }

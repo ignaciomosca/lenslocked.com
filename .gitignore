@@ -19,3 +19,6 @@ lenslocked.com
 
 # Don't include our images
 images/**
+
+# Don't include config files
+.config

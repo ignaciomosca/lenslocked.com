@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,10 +15,11 @@ import (
 )
 
 func main() {
+	boolPtr := flag.Bool("prod", false, "Provide this flag in production. This ensures that a .config file is provided before the application starts.")
 	r := mux.NewRouter()
 	static := controllers.NewStatic()
 
-	cfg := DefaultConfig()
+	cfg := LoadConfig(*boolPtr)
 	dbCfg := DefaultPosgresConfig()
 	services, err := models.NewServices(
 		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
