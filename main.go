@@ -55,6 +55,7 @@ func main() {
 	r.HandleFunc("/sign-up", usersController.Create).Methods("POST")
 	r.HandleFunc("/login", usersController.LoginView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/login", usersController.SignIn).Methods("POST")
+	r.HandleFunc("/logout", requireUserMw.ApplyFn(usersController.SignOut)).Methods("POST")
 
 	// Image routes
 	imageHandler := http.FileServer(http.Dir("./images/"))

@@ -3,7 +3,9 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"lenslocked.com/context"
 	"lenslocked.com/models"
 	"lenslocked.com/rand"
 	"lenslocked.com/views"
@@ -62,6 +64,18 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	u.signIn(w, loggedUser)
 	http.Redirect(w, r, "/galleries", http.StatusFound)
+}
+
+func (u *Users) SignOut(w http.ResponseWriter, r *http.Request) {
+	user := context.User(r.Context())
+	if user != nil {
+		cookie := http.Cookie{Name: "remember_token", Value: "", Expires: time.Now(), HttpOnly: true}
+		http.SetCookie(w, &cookie)
+	}
+	token, _ := rand.RememberToken()
+	user.Remember = token
+	u.UserService.Update(user)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 // Create is used to create a new user account
