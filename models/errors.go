@@ -13,6 +13,7 @@ var (
 	PasswordTooShort        modelError = "Password must be at least 8 characters long"
 	ErrRememberHashTooShort modelError = "Remember hash too short"
 	InvalidHash             modelError = "Remember hash is invalid"
+	ErrTokenInvalid         modelError = "Reset password token is invalid"
 )
 
 type modelError string

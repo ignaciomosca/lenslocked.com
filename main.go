@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"lenslocked.com/controllers"
+	"lenslocked.com/email"
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
 	"lenslocked.com/rand"
@@ -32,7 +33,15 @@ func main() {
 		panic(err)
 	}
 	defer services.Close()
-	usersController := controllers.NewUser(services.User)
+	services.AutoMigrate()
+	// Mailgun
+	mgCfg := cfg.Mailgun
+	emailer := email.NewClient(
+		email.WithSender("Lenslocked.com Support", "support@mg.lenslocked.com"),
+		email.WithMailgun(mgCfg.Domain, mgCfg.APIKey, mgCfg.PublicAPIKey),
+	)
+
+	usersController := controllers.NewUser(services.User, emailer)
 	galleriesC := controllers.NewGallery(services.Gallery, services.Image, r)
 
 	//CSRF
@@ -56,6 +65,10 @@ func main() {
 	r.HandleFunc("/login", usersController.LoginView.ServeHTTP).Methods("GET")
 	r.HandleFunc("/login", usersController.SignIn).Methods("POST")
 	r.HandleFunc("/logout", requireUserMw.ApplyFn(usersController.SignOut)).Methods("POST")
+	r.Handle("/forgot", usersController.ForgotPwView).Methods("GET")
+	r.HandleFunc("/forgot", usersController.InitiateReset).Methods("POST")
+	r.HandleFunc("/reset", usersController.ResetPw).Methods("GET")
+	r.HandleFunc("/reset", usersController.CompleteReset).Methods("POST")
 
 	// Image routes
 	imageHandler := http.FileServer(http.Dir("./images/"))

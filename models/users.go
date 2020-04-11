@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -15,6 +16,7 @@ import (
 type userService struct {
 	UserDB
 	passwordPepper string
+	pwResetDB      pwResetDB
 }
 
 // UserDB interacts with the user database
@@ -36,6 +38,8 @@ type UserService interface {
 	// if user/password is correct a user gets returned
 	// if not, it will return an error
 	Login(email, password string) (*User, error)
+	InitiateReset(email string) (string, error)
+	CompleteReset(token, newPw string) (*User, error)
 	UserDB
 }
 
@@ -101,6 +105,44 @@ func (uv *userValidator) Update(user *User) error {
 		return err
 	}
 	return uv.UserDB.Update(user)
+}
+
+func (us *userService) InitiateReset(email string) (string, error) {
+	user, err := us.ByEmail(email)
+	if err != nil {
+		return "", err
+	}
+	pwr := pwReset{
+		UserID: user.ID,
+	}
+	if err := us.pwResetDB.Create(&pwr); err != nil {
+		return "", err
+	}
+	return pwr.Token, nil
+}
+
+func (us *userService) CompleteReset(token, newPw string) (*User, error) {
+	pwr, err := us.pwResetDB.ByToken(token)
+	if err != nil {
+		if err == ErrNotFound {
+			return nil, ErrTokenInvalid
+		}
+		return nil, err
+	}
+	if time.Now().Sub(pwr.CreatedAt) > (12 * time.Hour) {
+		return nil, ErrTokenInvalid
+	}
+	user, err := us.ById(pwr.UserID)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = newPw
+	err = us.Update(user)
+	if err != nil {
+		return nil, err
+	}
+	us.pwResetDB.Delete(pwr.ID)
+	return user, nil
 }
 
 // Delete will delete a user with a provided id
@@ -243,6 +285,7 @@ func NewUserService(db *gorm.DB, pepper, hmacKey string) *userService {
 	return &userService{
 		UserDB:         uv,
 		passwordPepper: pepper,
+		pwResetDB:      newPwResetValidator(&pwResetGorm{db}, hmac),
 	}
 }
 

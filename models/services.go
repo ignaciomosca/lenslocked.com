@@ -54,6 +54,11 @@ func NewServices(cfgs ...ServicesConfig) (*Services, error) {
 	return &s, nil
 }
 
+// AutoMigrate will attempt to automatically migrate all tables
+func (s *Services) AutoMigrate() error {
+	return s.db.AutoMigrate(&User{}, &Gallery{}, &pwReset{}).Error
+}
+
 type Services struct {
 	User    UserService
 	Gallery GalleryService

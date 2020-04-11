@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/csrf"
 	"lenslocked.com/context"
@@ -95,4 +96,31 @@ func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type View struct {
 	Template *template.Template
 	Layout   string
+}
+
+func persistAlert(w http.ResponseWriter, alert Alert) {
+	expiresAt := time.Now().Add(5 * time.Minute)
+	lvl := http.Cookie{
+		Name:     "alert_level",
+		Value:    alert.Level,
+		Expires:  expiresAt,
+		HttpOnly: true,
+	}
+	msg := http.Cookie{
+		Name:     "alert_message",
+		Value:    alert.Message,
+		Expires:  expiresAt,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &lvl)
+	http.SetCookie(w, &msg)
+}
+
+// RedirectAlert accepts all the normal params for an
+// http.Redirect and performs a redirect, but only after
+// persisting the provided alert in a cookie so that it can
+// be displayed when the new page is loaded.
+func RedirectAlert(w http.ResponseWriter, r *http.Request, urlStr string, code int, alert Alert) {
+	persistAlert(w, alert)
+	http.Redirect(w, r, urlStr, code)
 }
