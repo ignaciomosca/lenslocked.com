@@ -56,19 +56,19 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
 	if err := r.ParseForm(); err != nil {
 		vd.SetAlert(err)
-		http.Redirect(w, r, "/login", http.StatusFound)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 	login := new(LoginForm)
 	if err := parse(r, login); err != nil {
 		vd.SetAlert(err)
-		http.Redirect(w, r, "/login", http.StatusFound)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 	loggedUser, loginErr := u.UserService.Login(login.Email, login.Password)
 	if loginErr != nil {
 		vd.SetAlert(loginErr)
-		http.Redirect(w, r, "/login", http.StatusFound)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 	u.signIn(w, loggedUser)

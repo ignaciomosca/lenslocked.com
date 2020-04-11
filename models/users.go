@@ -307,7 +307,6 @@ func (us *userService) Login(email, password string) (*User, error) {
 	if err != nil {
 		switch err {
 		case bcrypt.ErrMismatchedHashAndPassword:
-			fmt.Println("Failed login")
 			return nil, InvalidPassword
 		default:
 			return nil, err
